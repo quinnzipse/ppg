@@ -1,31 +1,47 @@
-import numpy
-import cv2
+from matplotlib.figure import Figure
+import numpy as np
+import cv2 as cv
 import time
-import matplotlib.pyplot as plt 
-import matplotlib.animation as animation
-
-
-fig, axs = plt.subplots(ncols=1, nrows=2)
-ax0 = axs[0]
-ax1 = axs[1]
-capture = cv2.VideoCapture(0)
-
-def animate(nothing):
-        success, img = capture.read()
-        data = [0, 256]
-        for i in range(0, 200):
-            for x in range(0, 200):
-                data.append(img[x, i, 2])
-        ax1.cla()
-        ax1.imshow(img)
-        ax0.cla()
-        ax0.hist(data, bins = 32, edgecolor="black", log=True)
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvas
 
 if __name__ == '__main__':
-    _animation = animation.FuncAnimation(fig, animate, interval=50)
-    
-    plt.tight_layout()
-    plt.show()
-    cv2.destroyAllWindows()
 
+    # Setup matplotlib here
+    fig = Figure()
+    canvas = FigureCanvas(fig)
+    axis = fig.subplots()
+    axis.set_title("Histogram")
+
+    capture = cv.VideoCapture(0)
+
+    if not capture.isOpened():
+        print("Camera won't open!")
+        exit()
+
+    while True:
+        successful, frame = capture.read()
+
+        if not successful:
+            print("Error recieving frame")
+            break
+
+        red_frame = frame[:,:,2]
+        red_histogram = cv.calcHist([red_frame], [0], None, [256], [0, 256])
+
+        axis.cla()
+        axis.plot(red_histogram)
+        axis.set_xlim([0,256])
+        canvas.draw()
+
+        red_histogram_img = np.array(canvas.renderer.buffer_rgba())
+
+        cv.imshow('Red Histogram', red_histogram_img)
+        cv.imshow('video', frame)
+        
+        if cv.waitKey(25) == ord('q'):
+            break
+        
+    cv.destroyAllWindows()
     capture.release()
