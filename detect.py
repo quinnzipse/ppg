@@ -10,12 +10,29 @@ canvas = FigureCanvas(fig)
 axis = fig.subplots()
 axis.set_title("Red Histogram")
 
+avgs = list()
+avgs.append(0)
+
+upsndowns = ""
+count = 0
+
 
 def getRedHistogram(input_frame):
-    # blurred_img = cv.blur(input_frame, (2, 2))
-    # preprocessed = cv.convertScaleAbs(input_frame, alpha=1.1, beta=0)
-    red_frame = input_frame[:, :, 2]
+    blurred_img = cv.blur(input_frame, (3,3))
+    # preprocessed = cv.convertScaleAbs(blurred_img, alpha=1.2, beta=0)
+    red_frame = blurred_img[:, :, 1]
     red_histogram = cv.calcHist([red_frame], [0], None, [256], [0, 256])
+
+    global count
+    global upsndowns
+    avgs.append(round(cv.mean(red_frame)[0]*100))
+    upsndowns += "+" if avgs[count] < avgs[count + 1] else "-"
+    count += 1
+
+    if upsndowns[-3:] == "+++":
+        print("BEAT")
+
+    print(upsndowns)
 
     axis.cla()
     axis.plot(red_histogram)
