@@ -1,6 +1,5 @@
 import numpy as np
 import cv2 as cv
-import time
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvas
@@ -8,7 +7,7 @@ from matplotlib.backends.backend_agg import FigureCanvas
 fig = Figure()
 canvas = FigureCanvas(fig)
 axis = fig.subplots()
-axis.set_title("Red Histogram")
+axis.set_title("Histogram")
 
 avgs = list()
 avgs.append(0)
@@ -17,32 +16,19 @@ upsndowns = ""
 count = 0
 
 
-def getRedHistogram(input_frame):
-    blurred_img = cv.blur(input_frame, (3,3))
-    # preprocessed = cv.convertScaleAbs(blurred_img, alpha=1.2, beta=0)
-    red_frame = blurred_img[:, :, 1]
-    red_histogram = cv.calcHist([red_frame], [0], None, [256], [0, 256])
-
-    global count
-    global upsndowns
-    avgs.append(round(cv.mean(red_frame)[0]*100))
-    upsndowns += "+" if avgs[count] < avgs[count + 1] else "-"
-    count += 1
-
-    if upsndowns[-3:] == "+++":
-        print("BEAT")
-
-    print(upsndowns)
+def getHistogram(input_frame, channel: int):
+    channel_frame = input_frame[:, :, channel]
+    histogram = cv.calcHist([channel_frame], [0], None, [256], [0, 256])
 
     axis.cla()
-    axis.plot(red_histogram)
+    axis.plot(histogram)
     axis.set_xlim([0, 256])
     canvas.draw()
 
-    red_histogram_img = np.array(canvas.renderer.buffer_rgba())
+    histogram_img = np.array(canvas.renderer.buffer_rgba())
 
-    cv.imshow('Red Histogram', red_histogram_img)
-    cv.imshow('Histogram Src', red_frame)
+    cv.imshow(f'Histogram Channel ${channel}', histogram_img)
+    cv.imshow('Histogram Src', channel_frame)
 
 
 if __name__ == '__main__':
@@ -116,7 +102,7 @@ if __name__ == '__main__':
             else:
                 sub_img = frame[
                     subframe_start_y:subframe_end_y, subframe_start_x:subframe_end_x, :]
-                getRedHistogram(sub_img)
+                getHistogram(sub_img, 1)
                 extra_windows_open = True
 
         cv.imshow('detect_faces', frame)
